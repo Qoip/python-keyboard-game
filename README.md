@@ -31,7 +31,7 @@ client:
 - ingame:
   - type words to attack verticies
   - choose which vertex to attack
-  - see field and other players verticies
+  - see field and other players verticies and their hp
   - see other players nicknames
 
 ## Classes
