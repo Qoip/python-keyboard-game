@@ -20,9 +20,11 @@ approximate scheme image:
 ## Features
 
 Server and client are actually in the same program, but server has separeted code and client on same device will connect to it like other players.
+
 server:
 - create game
 - start game
+
 client:
 - connect to server
 - change nickname
