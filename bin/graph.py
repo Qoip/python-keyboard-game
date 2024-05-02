@@ -23,15 +23,9 @@ class Graph:
         ]
         while len(self.vertices) < vertices_count:
             point = self.__get_best_point(bounds)
-            self.vertices.append(Vertex(point[0], point[1], None))  # add best
+            self.vertices.append(Vertex(point[0], point[1], None, False, randrange(5, 16)))  # add best with random size
 
-        # while not self.__graph_connected():
-        #     vertex1 = randrange(0, vertices_count)
-        #     vertex2 = randrange(0, vertices_count)
-        #     if vertex1 == vertex2 or self.connected(vertex1, vertex2):
-        #         continue
-        #     self.edges.append((vertex1, vertex2))
-        coefficient_range = [i / 10 for i in range(1, 9)]
+        coefficient_range = [i / 20 for i in range(1, 20)]
         for coefficient in coefficient_range:
             for vertex in self.vertices:
                 for other_vertex in self.vertices:
@@ -79,9 +73,8 @@ class Graph:
             ]
         elif count == 4:
             start_points = [
-                # top left
                 (randrange(0, int(self.bounds[0] * 0.1)),
-                 randrange(0, int(self.bounds[1] * 0.1))),
+                 randrange(0, int(self.bounds[1] * 0.1))),  # top left
                 (randrange(int(self.bounds[0] * 0.9), self.bounds[0]),
                  randrange(0, int(self.bounds[1] * 0.1))),  # top right
                 (randrange(0, int(self.bounds[0] * 0.1)), randrange(
@@ -93,8 +86,8 @@ class Graph:
 
     def __get_best_point(self, bounds: Tuple[int, int]) -> Tuple[int, int]:
         ''' Get the best point for new vertex '''
-        points_rate: List[List[Tuple[int, int], int]] = []  # list of tuples (point, rate)
-        for _ in range(100):
+        points_rate: List[List[Tuple[int, int], int]] = []  # list of pairs (point, rate)
+        for _ in range(1000):
             points_rate.append([(randrange(int(bounds[0] * 0.1), int(bounds[0] * 0.9)),
                                  randrange(int(bounds[1] * 0.1), int(bounds[1] * 0.9))), 0])
             for vertex in self.vertices:
