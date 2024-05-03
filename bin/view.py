@@ -3,7 +3,7 @@ from typing import Dict, Tuple
 
 from bin.graph import Graph
 from bin.view_constants import DEFAULT_COLOR, BACKGROUND_COLOR, CONTRAST_COLOR, GRAPH_OFFSET, MIN_WIGTH, \
-    TYPING_HEIGHT, FONT, FONT_SIZE
+    TYPING_HEIGHT, FONT, FONT_SIZE, HINT_FONT, HINT_FONT_SIZE
 
 
 class View:
@@ -55,6 +55,11 @@ class View:
                     (vertex.x + self.graph_start_point[0],
                      vertex.y + self.graph_start_point[1]),
                     vertex.size + 2, 2)
+                hint = pygame.font.SysFont(
+                    HINT_FONT, HINT_FONT_SIZE).render(
+                    vertex.owner, 1, CONTRAST_COLOR)  # owner hint
+                self.screen.blit(hint, (vertex.x + self.graph_start_point[0] - hint.get_width() // 2,
+                                        vertex.y + self.graph_start_point[1] + vertex.size))
             pygame.draw.circle(self.screen, color,
                                (vertex.x + self.graph_start_point[0],
                                 vertex.y + self.graph_start_point[1]),
@@ -73,7 +78,6 @@ class View:
                 self.screen.blit(text, (5, next_line_y))
                 next_line_y += FONT_SIZE + 5
                 line = f"{word} "
-            print(word, next_line_y, line)
             if next_line_y > self.window_size[1]:
                 break
         if next_line_y < self.window_size[1]:

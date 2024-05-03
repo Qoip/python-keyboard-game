@@ -10,3 +10,6 @@ TYPING_HEIGHT = 100  # height of typing block
 
 FONT = "comicsansms"  # font for typing block
 FONT_SIZE = 30  # font size for typing block
+
+HINT_FONT = "comicsansms"  # font for hints on graph (hp, names)
+HINT_FONT_SIZE = 10  # font size for hints
