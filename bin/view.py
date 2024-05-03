@@ -64,7 +64,7 @@ class View:
         ''' Draw typing block '''
         line = ""
         next_line_y = self.window_size[1] - TYPING_HEIGHT + 5
-        for i, word in enumerate(self.words):
+        for word in self.words:
             oldline = line
             line += f"{word} "
             width, _ = pygame.font.SysFont(FONT, FONT_SIZE).size(line)
@@ -73,6 +73,12 @@ class View:
                 self.screen.blit(text, (5, next_line_y))
                 next_line_y += FONT_SIZE + 5
                 line = f"{word} "
+            print(word, next_line_y, line)
+            if next_line_y > self.window_size[1]:
+                break
+        if next_line_y < self.window_size[1]:
+            text = pygame.font.SysFont(FONT, FONT_SIZE).render(line, 1, CONTRAST_COLOR)
+            self.screen.blit(text, (5, next_line_y))
 
     def run(self):
         ''' Run the game '''
@@ -81,7 +87,13 @@ class View:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                if event.type == pygame.KEYDOWN:
+                    if len(self.words) > 0 and len(self.words[0]) > 0 and event.unicode == self.words[0][0]:
+                        self.words[0] = self.words[0][1:]
+                        if len(self.words[0]) == 0:
+                            self.words.pop(0)
 
             self.update()
+            pygame.time.Clock().tick(20)
 
         pygame.quit()
