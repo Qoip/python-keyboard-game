@@ -5,20 +5,22 @@ from typing import Dict, Tuple, Literal, List, Generator
 
 from bin.graph import Graph
 from bin.view_constants import DEFAULT_COLOR, BACKGROUND_COLOR, CONTRAST_COLOR, GRAPH_OFFSET, MIN_WIGTH, \
-    TYPING_HEIGHT, FONT, FONT_SIZE, HINT_FONT, HINT_FONT_SIZE
+    TYPING_HEIGHT, FONT, FONT_SIZE, HINT_FONT, HINT_FONT_SIZE, LEGEND_WIDTH, LEGEND_FONT, LEGEND_FONT_SIZE
 
 
 class View:
     def __init__(self, color_scheme: Dict[str, Tuple[int, int, int]],
-                 graph: Graph, name: str = ""):
-        self.color_scheme = color_scheme
-        self.graph = graph
-        self.new_graph = None
-        self.stopped = False
-        self.__need_stop = False
+                 graph: Graph, name: str = "", legend: Dict[str, int] = {}):
+        self.color_scheme: Dict[str, Tuple[int, int, int]] = color_scheme
+        self.graph: Graph = graph
+        self.legend: Dict[str, int] = legend
 
-        self.my_name = name
-        self.current_vertex = None
+        self.new_graph: Graph = None
+        self.stopped: bool = False
+        self.__need_stop: bool = False
+
+        self.my_name: str = name
+        self.current_vertex: str = None
         for vertex in self.graph.vertices:  # set current vertex to mains
             if vertex.owner == name and vertex.is_main:
                 self.current_vertex = vertex.name
@@ -29,8 +31,8 @@ class View:
         self.mode: Literal["choose", "default", "viewer"] = "default"
 
         pygame.init()
-        self.window_size = (max(graph.bounds[0] + GRAPH_OFFSET * 2, MIN_WIGTH),
-                            graph.bounds[1] + GRAPH_OFFSET * 2 + TYPING_HEIGHT)
+        self.window_size = (max(graph.bounds[0] + GRAPH_OFFSET * 2 + LEGEND_WIDTH, MIN_WIGTH),
+                            max(graph.bounds[1] + GRAPH_OFFSET * 2, (LEGEND_FONT_SIZE + 5) * 5) + TYPING_HEIGHT)
         self.screen = pygame.display.set_mode(self.window_size)
         pygame.display.set_caption("Game")
 
@@ -58,7 +60,10 @@ class View:
                          (0, self.window_size[1] - TYPING_HEIGHT),
                          (self.window_size[0], self.window_size[1] - TYPING_HEIGHT), 2)  # blocks dividor
         self.__draw_typing_block()
-
+        pygame.draw.line(self.screen, CONTRAST_COLOR,
+                         (self.window_size[0] - LEGEND_WIDTH, 0),
+                         (self.window_size[0] - LEGEND_WIDTH, self.window_size[1] - TYPING_HEIGHT), 2)  # legend dividor
+        self.__draw_legend()
         pygame.display.flip()
 
     def __draw_graph(self):
@@ -128,6 +133,23 @@ class View:
         if next_line_y < self.window_size[1]:
             text = pygame.font.SysFont(FONT, FONT_SIZE).render(line, 1, CONTRAST_COLOR)
             self.screen.blit(text, (5, next_line_y))
+
+    def __draw_legend(self):
+        ''' Draw legend '''
+        legend_start_point = (self.window_size[0] - LEGEND_WIDTH + 5, 5)
+        for i, (key, value) in enumerate(self.legend.items()):
+            color = self.color_scheme.get(key, DEFAULT_COLOR)
+            text = pygame.font.SysFont(LEGEND_FONT, LEGEND_FONT_SIZE).render(f"{key}: {value}", 1, color)
+            shadow = pygame.font.SysFont(LEGEND_FONT, LEGEND_FONT_SIZE).render(f"{key}: {value}", 1, CONTRAST_COLOR)
+            self.screen.blit(shadow, (legend_start_point[0] + 1,
+                             legend_start_point[1] + i * (LEGEND_FONT_SIZE + 5) + 1))
+            self.screen.blit(shadow, (legend_start_point[0] - 1,
+                             legend_start_point[1] + i * (LEGEND_FONT_SIZE + 5) + 1))
+            self.screen.blit(shadow, (legend_start_point[0] + 1,
+                             legend_start_point[1] + i * (LEGEND_FONT_SIZE + 5) - 1))
+            self.screen.blit(shadow, (legend_start_point[0] - 1,
+                             legend_start_point[1] + i * (LEGEND_FONT_SIZE + 5) - 1))
+            self.screen.blit(text, (legend_start_point[0], legend_start_point[1] + i * (LEGEND_FONT_SIZE + 5)))
 
     def run(self) -> Generator[Tuple[str, str], None, None]:
         ''' Run the game '''
