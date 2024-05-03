@@ -24,6 +24,11 @@ class Graph:
         while len(self.vertices) < vertices_count:
             point = self.__get_best_point(bounds)
             self.vertices.append(Vertex(point[0], point[1], None, False, randrange(5, 16)))  # add best with random size
+        names = []
+        with open('data/names.txt', 'r') as file:
+            names = file.read().splitlines()
+        for vertex in self.vertices:  # pick random names for vertices
+            vertex.name = names.pop(randrange(len(names)))
 
         coefficient_range = [i / 20 for i in range(1, 20)]
         for coefficient in coefficient_range:
@@ -110,6 +115,6 @@ class Graph:
     def reachable(self, name: str, vertex: int) -> bool:
         ''' Check if vertex is reachable by "name"'''
         for edge in self.edges:
-            if vertex in edge and self.vertices[edge[0]].owner == name or self.vertices[edge[1]].owner == name:
+            if vertex in edge and (self.vertices[edge[0]].owner == name or self.vertices[edge[1]].owner == name):
                 return True
         return False
