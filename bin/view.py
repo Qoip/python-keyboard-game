@@ -1,5 +1,7 @@
+""" View module for the game client. """
+
 import pygame
-from typing import Dict, Tuple, Literal
+from typing import Dict, Tuple, Literal, List, Generator
 
 from bin.graph import Graph
 from bin.view_constants import DEFAULT_COLOR, BACKGROUND_COLOR, CONTRAST_COLOR, GRAPH_OFFSET, MIN_WIGTH, \
@@ -11,6 +13,9 @@ class View:
                  graph: Graph, name: str = ""):
         self.color_scheme = color_scheme
         self.graph = graph
+        self.new_graph = None
+        self.stopped = False
+        self.__need_stop = False
 
         self.my_name = name
         self.current_vertex = None
@@ -20,8 +25,8 @@ class View:
                 break
         assert self.current_vertex is not None, "No main vertex for player"
 
-        self.words = []
-        self.mode: Literal["choose", "default"] = "default"
+        self.words: List[str] = []
+        self.mode: Literal["choose", "default", "viewer"] = "default"
 
         pygame.init()
         self.window_size = (max(graph.bounds[0] + GRAPH_OFFSET * 2, MIN_WIGTH),
@@ -33,10 +38,21 @@ class View:
         if MIN_WIGTH > graph.bounds[0] + GRAPH_OFFSET * 2:  # center the graph
             self.graph_start_point = (MIN_WIGTH // 2 - graph.bounds[0] // 2, GRAPH_OFFSET)
 
+    def stop(self):
+        ''' Stop the game '''
+        self.__need_stop = True
+
+    def resume(self):
+        ''' Resume updates '''
+        self.stopped = False
+
     def update(self):
         ''' Update the display '''
         self.screen.fill(BACKGROUND_COLOR)
 
+        if self.new_graph:
+            self.graph = self.new_graph
+            self.new_graph = None
         self.__draw_graph()
         pygame.draw.line(self.screen, CONTRAST_COLOR,
                          (0, self.window_size[1] - TYPING_HEIGHT),
@@ -64,7 +80,7 @@ class View:
                     self.screen, CONTRAST_COLOR,
                     (vertex.x + self.graph_start_point[0],
                      vertex.y + self.graph_start_point[1]),
-                    vertex.size + 2, 2)  # main vertex border
+                    vertex.size, 3)  # main vertex border
                 if self.mode == "default":  # owner hint needed
                     hint = pygame.font.SysFont(
                         HINT_FONT, HINT_FONT_SIZE).render(
@@ -74,18 +90,25 @@ class View:
             pygame.draw.circle(self.screen, color,
                                (vertex.x + self.graph_start_point[0],
                                 vertex.y + self.graph_start_point[1]),
-                               vertex.size)
+                               vertex.size - (2 if vertex.is_main else 0))
             if self.mode == "choose" and self.graph.reachable(self.my_name, i):  # vertex name hint
                 hint = pygame.font.SysFont(
                     HINT_FONT, HINT_FONT_SIZE, True).render(
                     vertex.name, 1, CONTRAST_COLOR, BACKGROUND_COLOR)
                 self.screen.blit(hint, (vertex.x + self.graph_start_point[0] - hint.get_width() // 2,
                                         vertex.y + self.graph_start_point[1] + vertex.size))
+            elif self.mode == "default":  # hp hint
+                hint = pygame.font.SysFont(
+                    HINT_FONT, HINT_FONT_SIZE).render(
+                    str(vertex.hp), 1, CONTRAST_COLOR, BACKGROUND_COLOR)
+                self.screen.blit(hint, (vertex.x + self.graph_start_point[0] - hint.get_width() // 2,
+                                        vertex.y + self.graph_start_point[1] - vertex.size - hint.get_height()))
+
             if vertex.name == self.current_vertex:  # current vertex border
                 pygame.draw.rect(self.screen, CONTRAST_COLOR,
-                                 (vertex.x + self.graph_start_point[0] - vertex.size - 2,
-                                  vertex.y + self.graph_start_point[1] - vertex.size - 2,
-                                  vertex.size * 2 + 4, vertex.size * 2 + 4), 2)
+                                 (vertex.x + self.graph_start_point[0] - vertex.size - 4,
+                                  vertex.y + self.graph_start_point[1] - vertex.size - 4,
+                                  vertex.size * 2 + 8, vertex.size * 2 + 8), 2)
 
     def __draw_typing_block(self):
         ''' Draw typing block '''
@@ -106,10 +129,17 @@ class View:
             text = pygame.font.SysFont(FONT, FONT_SIZE).render(line, 1, CONTRAST_COLOR)
             self.screen.blit(text, (5, next_line_y))
 
-    def run(self):
+    def run(self) -> Generator[Tuple[str, str], None, None]:
         ''' Run the game '''
         running = True
+        self.clock = pygame.time.Clock()
         while running:
+            if self.__need_stop:
+                self.stopped = True
+                self.__need_stop = False
+            if self.stopped:
+                self.clock.tick(20)
+                continue
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -126,6 +156,7 @@ class View:
                             self.words[0] = self.words[0][1:]
                             if len(self.words[0]) == 0:
                                 self.words.pop(0)
+                                yield ("attack", self.current_vertex)
                     elif self.mode == "choose":
                         if event.unicode.isalpha():
                             self.words[0] += event.unicode
@@ -134,14 +165,16 @@ class View:
                         elif event.key == pygame.K_BACKSPACE and len(self.words[0]) > 0:
                             self.words[0] = self.words[0][:-1]
                         elif event.key == pygame.K_RETURN:
-                            if any([self.graph.reachable(self.my_name, i) for i in range(len(self.graph.vertices))]):
+                            if any([self.graph.vertices[i].name == self.words[0] and self.graph.reachable(
+                                    self.my_name, i) for i in range(len(self.graph.vertices))]):
                                 self.current_vertex = self.words[0]
                                 self.words = []
+                                yield ("change", self.current_vertex)
                                 self.mode = "default"
                             else:
                                 print("No such vertex to go.")  # TODO alert
 
             self.update()
-            pygame.time.Clock().tick(20)
+            self.clock.tick(20)
 
         pygame.quit()
