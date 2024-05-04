@@ -88,7 +88,7 @@ class View:
                     vertex.size, 3)  # main vertex border
                 if self.mode == "default":  # owner hint needed
                     hint = pygame.font.SysFont(
-                        HINT_FONT, HINT_FONT_SIZE).render(
+                        HINT_FONT, HINT_FONT_SIZE, True).render(
                         vertex.owner, 1, CONTRAST_COLOR)
                     self.screen.blit(hint, (vertex.x + self.graph_start_point[0] - hint.get_width() // 2,
                                             vertex.y + self.graph_start_point[1] + vertex.size))
