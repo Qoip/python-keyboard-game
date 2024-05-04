@@ -19,7 +19,7 @@ class Graph:
 
         start_points = self.__get_start_points(len(nicknames))
         self.vertices = [
-            Vertex(start_points[i][0], start_points[i][1], nicknames[i], True) for i in range(len(nicknames))
+            Vertex(start_points[i][0], start_points[i][1], nicknames[i], True, 10) for i in range(len(nicknames))
         ]
         while len(self.vertices) < vertices_count:
             point = self.__get_best_point(bounds)
@@ -97,7 +97,7 @@ class Graph:
                                  randrange(int(bounds[1] * 0.1), int(bounds[1] * 0.9))), 0])
             for vertex in self.vertices:
                 if self.distance((vertex.x, vertex.y), points_rate[-1][0]) < min(bounds) * 0.2:
-                    points_rate[-1][1] += 1
+                    points_rate[-1][1] += min(bounds) * 0.2 - self.distance((vertex.x, vertex.y), points_rate[-1][0])
         points_rate.sort(key=lambda x: x[1], reverse=True)
         return points_rate[-1][0]
 
