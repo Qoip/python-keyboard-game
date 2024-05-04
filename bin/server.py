@@ -4,7 +4,11 @@ from bin.graph import Graph
 
 import tkinter as tk
 from tkinter import messagebox
-from typing import Tuple, List, Dict
+import random
+from typing import Tuple, List, Dict, Any
+import asyncio
+import threading
+import json
 
 
 class Server:
@@ -13,17 +17,52 @@ class Server:
         self.bounds: Tuple[int, int] = None
         self.dense: int = None
         self.time: int = None
-
-        self.address: str = ""  # TODO: get address
+        self.graph: Graph = None
         self.players: List[str] = []
+        self.color_scheme: Dict[str, Tuple[int, int, int]] = {}
 
-        self.run_menu()
+        self.port = random.randrange(10000, 60000)
+        self.address: str = f"127.0.0.1:{self.port}"
+        self.server: asyncio.AbstractServer = None
+        self.is_serving: bool = False
+
+        self.players_address: Dict[str, str] = {}
+        self.client_updates: asyncio.Queue[str] = asyncio.Queue()
+
+    async def run(self):
+        server_thread = threading.Thread(target=lambda: asyncio.run(self.start_server()))
+        server_thread.start()
+
+        await self.run_menu()
         self.graph = Graph()
         self.graph.generate(self.players, self.bounds, self.dense)
-        self.color_scheme: Dict[str, Tuple[int, int, int]] = None
-        self.legend: Dict[str, int] = None
+        self.legend: Dict[str, int] = self.get_legend()
 
-    def run_menu(self) -> None:
+        print(self.players, self.color_scheme, self.legend, self.players_address)
+        print(self.dense, self.bounds, self.time)
+
+        # await self.stop_server()
+        self.is_serving = False
+        server_thread.join()
+
+    async def start_server(self):
+        """ Start server listening"""
+        self.server = await asyncio.start_server(self.handle_update, '127.0.0.1', self.port)
+        print("port", self.port)
+        self.is_serving = True
+        async with self.server:
+            while self.is_serving:
+                await asyncio.sleep(0.1)
+
+    async def handle_update(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+        data = await reader.read(1024)
+        message = data.decode()
+        addr = writer.get_extra_info('peername')
+        print(f"get {message} from {addr}")
+        await self.client_updates.put((addr, message))
+        writer.close()
+
+    async def run_menu(self) -> None:
         ''' Run menu '''
         root = tk.Tk()
         root.title("Server menu")
@@ -74,13 +113,28 @@ class Server:
         players_label = tk.Label(root, text=f"{self.players}")
         players_label.pack()
 
+        start_clicked = False
+
         def update_players():
-            # TODO: update players
+            while not self.client_updates.empty():
+                addr, message = self.client_updates.get_nowait()
+                data: Dict[str, Any] = json.loads(message)
+                if data.get("command") == "connect":
+                    self.players.append(data.get("nickname"))
+                    self.color_scheme[data.get("nickname")] = tuple(data.get("color"))
+                    self.players_address[data.get("nickname")] = addr
             players_label.config(text=f"{self.players}")
             if not start_clicked:
                 root.after(1000, update_players)
-        start_clicked = False
 
         update_players()
         root.mainloop()
 
+    def get_legend(self) -> Dict[str, int]:
+        ''' Get legend '''
+        legend = {
+            "time": self.time,
+        }
+        for player in self.players:
+            legend[player] = 0
+        return legend
