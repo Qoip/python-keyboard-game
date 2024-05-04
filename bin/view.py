@@ -1,7 +1,8 @@
 """ View module for the game client. """
 
 import pygame
-from typing import Dict, Tuple, Literal, List, Generator
+from typing import Dict, Tuple, Literal, List
+import queue
 
 from bin.graph import Graph
 from bin.view_constants import DEFAULT_COLOR, BACKGROUND_COLOR, CONTRAST_COLOR, GRAPH_OFFSET, MIN_WIGTH, \
@@ -14,6 +15,9 @@ class View:
         self.color_scheme: Dict[str, Tuple[int, int, int]] = color_scheme
         self.graph: Graph = graph
         self.legend: Dict[str, int] = legend
+        self.words: List[str] = []
+
+        self.events: queue.Queue = queue.Queue()
 
         self.new_graph: Graph = None
         self.stopped: bool = False
@@ -27,7 +31,6 @@ class View:
                 break
         assert self.current_vertex is not None, "No main vertex for player"
 
-        self.words: List[str] = []
         self.mode: Literal["choose", "default", "viewer"] = "default"
 
         pygame.init()
@@ -151,7 +154,7 @@ class View:
                              legend_start_point[1] + i * (LEGEND_FONT_SIZE + 5) - 1))
             self.screen.blit(text, (legend_start_point[0], legend_start_point[1] + i * (LEGEND_FONT_SIZE + 5)))
 
-    def run(self) -> Generator[Tuple[str, str], None, None]:
+    def run(self) -> None:
         ''' Run the game '''
         running = True
         self.clock = pygame.time.Clock()
@@ -178,7 +181,7 @@ class View:
                             self.words[0] = self.words[0][1:]
                             if len(self.words[0]) == 0:
                                 self.words.pop(0)
-                                yield ("attack", self.current_vertex)
+                                self.events.put(("attack", self.current_vertex))
                     elif self.mode == "choose":
                         if event.unicode.isalpha():
                             self.words[0] += event.unicode
@@ -191,7 +194,7 @@ class View:
                                     self.my_name, i) for i in range(len(self.graph.vertices))]):
                                 self.current_vertex = self.words[0]
                                 self.words = []
-                                yield ("change", self.current_vertex)
+                                self.events.put(("change", self.current_vertex))
                                 self.mode = "default"
                             else:
                                 print("No such vertex to go.")  # TODO alert
