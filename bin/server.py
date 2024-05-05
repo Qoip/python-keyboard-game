@@ -20,6 +20,7 @@ class Server:
         self.graph: Graph = None
         self.players: List[str] = []
         self.color_scheme: Dict[str, Tuple[int, int, int]] = {}
+        self.game_start_time: float = None
 
         self.port = random.randrange(10000, 60000)
         self.address: str = f"127.0.0.1:{self.port}"
@@ -41,9 +42,15 @@ class Server:
         print(self.players, self.color_scheme, self.legend, self.players_address)
         print(self.dense, self.bounds, self.time)
 
-        # await self.stop_server()
+        self.game_start_time = asyncio.get_event_loop().time()
+        while asyncio.get_event_loop().time() - self.game_start_time < self.time:
+            await self.game_loop()
+
         self.is_serving = False
         server_thread.join()
+
+    async def game_loop(self):
+        """ Game loop """
 
     async def start_server(self):
         """ Start server listening"""
