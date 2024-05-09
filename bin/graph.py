@@ -19,7 +19,7 @@ class Graph:
 
         start_points = self.__get_start_points(len(nicknames))
         self.vertices = [
-            Vertex(start_points[i][0], start_points[i][1], nicknames[i], True, 10) for i in range(len(nicknames))
+            Vertex(start_points[i][0], start_points[i][1], nicknames[i], True, -1) for i in range(len(nicknames))
         ]
         while len(self.vertices) < vertices_count:
             point = self.__get_best_point(bounds)

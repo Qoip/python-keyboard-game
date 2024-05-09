@@ -99,13 +99,13 @@ class View:
                                (vertex.x + self.graph_start_point[0],
                                 vertex.y + self.graph_start_point[1]),
                                vertex.size - (2 if vertex.is_main else 0))
-            if self.mode == "choose" and self.graph.reachable(self.my_name, i):  # vertex name hint
+            if self.mode == "choose" and self.graph.reachable(self.my_name, i) and not vertex.is_main:  # name hint
                 hint = pygame.font.SysFont(
                     HINT_FONT, HINT_FONT_SIZE, True).render(
                     vertex.name, 1, CONTRAST_COLOR, BACKGROUND_COLOR)
                 self.screen.blit(hint, (vertex.x + self.graph_start_point[0] - hint.get_width() // 2,
                                         vertex.y + self.graph_start_point[1] + vertex.size))
-            elif self.mode == "default":  # hp hint
+            elif self.mode == "default" and vertex.hp >= 0:  # hp hint
                 hint = pygame.font.SysFont(
                     HINT_FONT, HINT_FONT_SIZE).render(
                     str(vertex.hp), 1, CONTRAST_COLOR, BACKGROUND_COLOR)
