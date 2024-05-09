@@ -5,7 +5,7 @@ from bin.graph import Graph
 import tkinter as tk
 from tkinter import messagebox
 import random
-from typing import Tuple, List, Dict, Any
+from typing import Tuple, List, Dict, Any, Set
 import asyncio
 import threading
 import json
@@ -26,8 +26,9 @@ class Server:
         self.address: str = f"127.0.0.1:{self.port}"
         self.server: asyncio.AbstractServer = None
         self.is_serving: bool = False
+        self.active_connections: Set[asyncio.StreamWriter] = []
 
-        self.players_address: Dict[str, str] = {}
+        self.players_address: Dict[str, Tuple[str, int]] = {}
         self.client_updates: asyncio.Queue[str] = asyncio.Queue()
 
     async def run(self):
@@ -42,9 +43,9 @@ class Server:
         print(self.players, self.color_scheme, self.legend, self.players_address)
         print(self.dense, self.bounds, self.time)
 
-        self.game_start_time = asyncio.get_event_loop().time()
-        while asyncio.get_event_loop().time() - self.game_start_time < self.time:
-            await self.game_loop()
+        # self.game_start_time = asyncio.get_event_loop().time()
+        # while asyncio.get_event_loop().time() - self.game_start_time < self.time:
+        #     await self.game_loop()
 
         self.is_serving = False
         server_thread.join()
@@ -53,21 +54,31 @@ class Server:
         """ Game loop """
 
     async def start_server(self):
-        """ Start server listening"""
+        """ Start server listening """
         self.server = await asyncio.start_server(self.handle_update, '127.0.0.1', self.port)
-        print("port", self.port)
+        print("started on port", self.port)
         self.is_serving = True
-        async with self.server:
-            while self.is_serving:
-                await asyncio.sleep(0.1)
+        while self.is_serving:
+            await asyncio.sleep(0.1)
+        self.server.close()
+        for connection in self.active_connections:
+            connection.close()
+        await self.server.wait_closed()
 
     async def handle_update(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+        self.active_connections.add(writer)
         data = await reader.read(1024)
         message = data.decode()
         addr = writer.get_extra_info('peername')
         print(f"get {message} from {addr}")
-        await self.client_updates.put((addr, message))
-        writer.close()
+        if False:
+            response = ""
+            writer.write(response.encode())
+            await writer.drain()
+        else:
+            await self.client_updates.put((addr, message))
+            writer.write("resieved".encode())
+            await writer.drain()
 
     async def run_menu(self) -> None:
         ''' Run menu '''
@@ -81,20 +92,24 @@ class Server:
         x_label = tk.Label(root, text="X:")
         x_label.pack()
         x_entry = tk.Entry(root, width=20)
+        x_entry.insert(0, "500")
         x_entry.pack()
         y_label = tk.Label(root, text="Y:")
         y_label.pack()
         y_entry = tk.Entry(root, width=20)
+        y_entry.insert(0, "500")
         y_entry.pack()
 
         dense_label = tk.Label(root, text="Density (there will dense*(players+1) vertices in graph):")
         dense_label.pack()
         dense_entry = tk.Entry(root, width=20)
         dense_entry.pack()
+        dense_entry.insert(0, "3")
 
         time_label = tk.Label(root, text="Game time (seconds):")
         time_label.pack()
         time_entry = tk.Entry(root, width=20)
+        time_entry.insert(0, "300")
         time_entry.pack()
 
         def start():
