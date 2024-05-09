@@ -20,16 +20,16 @@ class Server:
         self.graph: Graph = None
         self.players: List[str] = []
         self.color_scheme: Dict[str, Tuple[int, int, int]] = {}
-        self.game_start_time: float = None
+        self.game_start_time: float = None  # also game started flag
 
         self.port = random.randrange(10000, 60000)
         self.address: str = f"127.0.0.1:{self.port}"
         self.server: asyncio.AbstractServer = None
         self.is_serving: bool = False
-        self.active_connections: Set[asyncio.StreamWriter] = []
+        self.active_connections: Set[asyncio.StreamWriter] = set()
 
-        self.players_address: Dict[str, Tuple[str, int]] = {}
-        self.client_updates: asyncio.Queue[str] = asyncio.Queue()
+        self.players_address: Dict[Tuple[str, int], str] = {}
+        self.client_updates: asyncio.Queue[Tuple[str, Dict[str, Any]]] = asyncio.Queue()
 
     async def run(self):
         server_thread = threading.Thread(target=lambda: asyncio.run(self.start_server()))
@@ -40,8 +40,9 @@ class Server:
         self.graph.generate(self.players, self.bounds, self.dense)
         self.legend: Dict[str, int] = self.get_legend()
 
-        print(self.players, self.color_scheme, self.legend, self.players_address)
-        print(self.dense, self.bounds, self.time)
+        print("[settings]", "dense:", self.dense, "bounds:", self.bounds, "time:", self.time)
+        print("[settings]", "players:", self.players, "color_scheme:", self.color_scheme)
+        print("[settings]", "legend:", self.legend, "players_address:", self.players_address)
 
         # self.game_start_time = asyncio.get_event_loop().time()
         # while asyncio.get_event_loop().time() - self.game_start_time < self.time:
@@ -67,18 +68,49 @@ class Server:
 
     async def handle_update(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         self.active_connections.add(writer)
-        data = await reader.read(1024)
-        message = data.decode()
-        addr = writer.get_extra_info('peername')
-        print(f"get {message} from {addr}")
-        if False:
+        raw_data = await reader.read(1024)
+        addr: Tuple[str, int] = writer.get_extra_info('peername')
+        print("[handler]", f"get {raw_data} from {addr}")
+        data: Dict[str, Any]
+        try:
+            data = json.loads(raw_data.decode())
+        except json.JSONDecodeError:
+            print("[handler]", "invalid data recieved")
+            writer.write("invalid".encode())
+            await writer.drain()
+            return
+
+        if data.get("command") == "connect" and not self.game_start_time:
+            if data.get("nickname") in self.players:
+                print("[handler]", "nickname exists")
+                writer.write("nickname exists".encode())
+                await writer.drain()
+                return
+            print("[handler]", "new player", data.get("nickname"))
+            self.players.append(data.get("nickname"))
+            self.color_scheme[data.get("nickname")] = tuple(data.get("color"))
+            self.players_address[addr] = data.get("nickname")
+            writer.write("connected".encode())
+            await writer.drain()
+            return
+
+        nickname = self.players_address.get(addr, None)
+        if nickname is None:
+            print("[handler]", "unknown player query")
+            writer.write("unknown".encode())
+            await writer.drain()
+            return
+
+        if data.get("command") == "get":
+            print("[handler]", "get query from", nickname)
             response = ""
             writer.write(response.encode())
             await writer.drain()
-        else:
-            await self.client_updates.put((addr, message))
-            writer.write("resieved".encode())
-            await writer.drain()
+            return
+        print("[handler]", f"'{data.get("command")}' query from {nickname}")
+        await self.client_updates.put((nickname, data))
+        writer.write("recieved".encode())
+        await writer.drain()
 
     async def run_menu(self) -> None:
         ''' Run menu '''
@@ -138,13 +170,6 @@ class Server:
         start_clicked = False
 
         def update_players():
-            while not self.client_updates.empty():
-                addr, message = self.client_updates.get_nowait()
-                data: Dict[str, Any] = json.loads(message)
-                if data.get("command") == "connect":
-                    self.players.append(data.get("nickname"))
-                    self.color_scheme[data.get("nickname")] = tuple(data.get("color"))
-                    self.players_address[data.get("nickname")] = addr
             players_label.config(text=f"{self.players}")
             if not start_clicked:
                 root.after(1000, update_players)
