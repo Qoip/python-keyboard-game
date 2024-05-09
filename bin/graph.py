@@ -122,3 +122,10 @@ class Graph:
     def count(self, name: str) -> int:
         ''' Count vertices owned by "name" '''
         return len([vertex for vertex in self.vertices if vertex.owner == name])
+
+    def get_main(self, name: str) -> int:
+        ''' Get main vertex index '''
+        for i, vertex in enumerate(self.vertices):
+            if vertex.owner == name and vertex.is_main:
+                return i
+        return None
