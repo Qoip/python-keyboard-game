@@ -118,3 +118,7 @@ class Graph:
             if vertex in edge and (self.vertices[edge[0]].owner == name or self.vertices[edge[1]].owner == name):
                 return True
         return False
+
+    def count(self, name: str) -> int:
+        ''' Count vertices owned by "name" '''
+        return len([vertex for vertex in self.vertices if vertex.owner == name])
