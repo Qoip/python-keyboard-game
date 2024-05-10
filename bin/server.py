@@ -33,6 +33,17 @@ class Server:
         self.game_start_time: float = None  # also game started flag
         self.client_updates: asyncio.Queue[Tuple[str, Dict[str, Any]]] = asyncio.Queue()  # nickname -> json query
 
+        self.words: Dict[int, List[str]] = {}
+        with open("data/words.txt", "r") as file:
+            for line in file:
+                word = line
+                size = len(word)
+                if size not in self.words:
+                    self.words[size] = []
+                self.words[size].append(word)
+        # for i in self.words:
+        #     print(i, len(self.words[i]))
+
     async def run(self):
         server_thread = threading.Thread(target=lambda: asyncio.run(self.start_server()))
         server_thread.start()
@@ -175,9 +186,14 @@ class Server:
                     response = json.dumps(self.legend)
                 elif argument == "color_scheme":
                     response = json.dumps(self.color_scheme)
+                elif argument == "words":
+                    if self.graph.vertices[self.current_vertex[nickname]].is_main:
+                        response = "no words on main vertex"
+                    else:
+                        response = self.get_words(self.graph.vertices[self.current_vertex[nickname]].size)
                 else:
+                    response = "invalid"
                     print("[handler]", "invalid get query from", nickname)
-                    continue
                 print("[handler]", "get query from", nickname)
                 writer.write(response.encode())
                 await writer.drain()
@@ -260,3 +276,12 @@ class Server:
         for player in self.players:
             legend[player] = 0
         return legend
+
+    def get_words(self, size: int) -> str:
+        ''' Get 50 words '''
+        words_length = size // 2 + 3
+        words_count = min(50, len(self.words[words_length]))
+        words = random.sample(self.words[words_length], words_count)
+        random.shuffle(words)
+        words = [word.rstrip('\n') for word in words]
+        return str(words)

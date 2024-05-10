@@ -3,12 +3,13 @@
 from bin.graph import Graph
 from bin.view import View
 
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 import tkinter as tk
 from tkinter import colorchooser, messagebox
 import asyncio
 import json
 import threading
+import ast
 
 
 class Client:
@@ -52,6 +53,7 @@ class Client:
         view_thread.start()
         while self.view is None:
             await asyncio.sleep(0.2)
+        new_words: List[str] = []
         while self.view.legend.get("time") > 0:
             while not self.view.events.empty():
                 event = self.view.events.get()
@@ -59,12 +61,19 @@ class Client:
                     await self.query('{"command": "attack", "argument": ' + str(event[1]) + '}')
                 elif event[0] == "change":
                     await self.query('{"command": "change", "argument": ' + str(event[1]) + '}')
+                    response = await self.query('{"command": "get", "argument": "words"}')
+                    if response.startswith("["):
+                        new_words = ast.literal_eval(response)
+
             await asyncio.sleep(0.5)
             new_graph = json.loads(await self.query('{"command": "get", "argument": "graph"}'))
             new_legend = json.loads(await self.query('{"command": "get", "argument": "legend"}'))
-            # with self.lock:
-            self.view._graph.from_dict(new_graph)
-            self.view._legend = new_legend
+            with self.lock:
+                self.view._graph.from_dict(new_graph)
+                self.view._legend = new_legend
+                if new_words:
+                    self.view.words = new_words
+                    new_words = []
         self.view.running = False
         view_thread.join()
 
