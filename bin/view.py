@@ -1,8 +1,8 @@
-""" View module for the game client. """
+""" Game view class module"""
 
-import pygame
 from typing import Dict, Tuple, Literal, List
 import queue
+import pygame
 
 from bin.graph import Graph
 from bin.view_constants import DEFAULT_COLOR, BACKGROUND_COLOR, CONTRAST_COLOR, GRAPH_OFFSET, MIN_WIGTH, \
@@ -10,11 +10,12 @@ from bin.view_constants import DEFAULT_COLOR, BACKGROUND_COLOR, CONTRAST_COLOR, 
 
 
 class View:
+    ''' Game view for game client '''
     def __init__(self, color_scheme: Dict[str, Tuple[int, int, int]],
-                 graph: Graph, name: str = "", legend: Dict[str, int] = {}):
+                 graph: Graph, name: str = "", legend: Dict[str, int] = None):
         self.color_scheme: Dict[str, Tuple[int, int, int]] = color_scheme
-        self._graph: Graph = graph
-        self._legend: Dict[str, int] = legend
+        self.graph_: Graph = graph
+        self.legend_: Dict[str, int] = legend if legend is not None else {}
         self.words: List[str] = []
 
         self.events: queue.Queue[Tuple[Literal["attack", "change"], int]] = queue.Queue()
@@ -47,16 +48,16 @@ class View:
         ''' Get graph '''
         if self.lock is not None:
             with self.lock:
-                return self._graph
-        return self._graph
+                return self.graph_
+        return self.graph_
 
     @property
     def legend(self) -> Dict[str, int]:
         ''' Get legend '''
         if self.lock is not None:
             with self.lock:
-                return self._legend
-        return self._legend
+                return self.legend_
+        return self.legend_
 
     def update(self):
         ''' Update the display '''
@@ -195,7 +196,7 @@ class View:
                                 self.events.put(("change", self.graph.get_id(self.current_vertex)))
                                 self.mode = "default"
                             else:
-                                print("No such vertex to go.")  # TODO alert
+                                print("No such vertex to go.")
 
             self.update()
             self.clock.tick(20)

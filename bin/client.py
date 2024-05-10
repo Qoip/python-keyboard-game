@@ -1,8 +1,5 @@
 """ Client module """
 
-from bin.graph import Graph
-from bin.view import View
-
 from typing import Tuple, Dict, List
 import tkinter as tk
 from tkinter import colorchooser, messagebox
@@ -11,8 +8,12 @@ import json
 import threading
 import ast
 
+from bin.graph import Graph
+from bin.view import View
+
 
 class Client:
+    ''' Game client class '''
     def __init__(self):
         self.graph: Graph = None
         self.color_scheme: Dict[str, Tuple[int, int, int]] = None
@@ -24,6 +25,9 @@ class Client:
 
         self.reader: asyncio.StreamReader = None
         self.writer: asyncio.StreamWriter = None
+
+        self.view: View = None
+        self.lock = threading.Lock()
 
     async def run(self):
         ''' Run client '''
@@ -46,9 +50,6 @@ class Client:
         self.color_scheme = json.loads(await self.query('{"command": "get", "argument": "color_scheme"}'))
         self.legend = json.loads(await self.query('{"command": "get", "argument": "legend"}'))
 
-        self.view = None
-        self.lock = threading.Lock()
-        self.view: View = None
         view_thread = threading.Thread(target=self.create_view)
         view_thread.start()
         while self.view is None:
@@ -69,8 +70,8 @@ class Client:
             new_graph = json.loads(await self.query('{"command": "get", "argument": "graph"}'))
             new_legend = json.loads(await self.query('{"command": "get", "argument": "legend"}'))
             with self.lock:
-                self.view._graph.from_dict(new_graph)
-                self.view._legend = new_legend
+                self.view.graph_.from_dict(new_graph)
+                self.view.legend_ = new_legend
                 if new_words:
                     self.view.words = new_words
                     new_words = []
@@ -78,6 +79,7 @@ class Client:
         view_thread.join()
 
     def create_view(self):
+        ''' Create and run view'''
         self.view = View(self.color_scheme, self.graph, self.nickname, self.legend)
         self.view.lock = self.lock
         self.view.run()
@@ -128,6 +130,6 @@ class Client:
 
         connect_button = tk.Button(root, text="Save", command=save)
         connect_button.pack()
-        root.protocol("WM_DELETE_WINDOW", lambda: exit())
+        root.protocol("WM_DELETE_WINDOW", exit)
 
         root.mainloop()

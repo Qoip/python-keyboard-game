@@ -1,7 +1,5 @@
 """ Server module """
 
-from bin.graph import Graph
-
 import tkinter as tk
 from tkinter import messagebox
 import random
@@ -10,9 +8,11 @@ import asyncio
 import threading
 import json
 
+from bin.graph import Graph
+
 
 class Server:
-
+    ''' Game server class '''
     def __init__(self):
         self.bounds: Tuple[int, int] = None
         self.dense: int = None
@@ -32,9 +32,10 @@ class Server:
 
         self.game_start_time: float = None  # also game started flag
         self.client_updates: asyncio.Queue[Tuple[str, Dict[str, Any]]] = asyncio.Queue()  # nickname -> json query
+        self.start_clicked: bool = False
 
         self.words: Dict[int, List[str]] = {}
-        with open("data/words.txt", "r") as file:
+        with open("data/words.txt", "r", encoding='utf-8') as file:
             for line in file:
                 word = line
                 size = len(word)
@@ -43,6 +44,7 @@ class Server:
                 self.words[size].append(word)
 
     async def run(self):
+        """ Run server logic """
         server_thread = threading.Thread(target=lambda: asyncio.run(self.start_server()))
         server_thread.start()
 
@@ -130,6 +132,7 @@ class Server:
         print("[server] server closed")
 
     async def handle_update(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+        """ Handle client connections """
         self.active_connections.add(writer)
         while self.is_serving:
             raw_data = await reader.read(1024)
@@ -240,8 +243,7 @@ class Server:
             self.bounds = (int(x_entry.get()), int(y_entry.get()))
             self.dense = int(dense_entry.get())
             self.time = int(time_entry.get())
-            global start_clicked
-            start_clicked = True
+            self.start_clicked = True
             root.destroy()
 
         connect_button = tk.Button(root, text="Start game", command=start)
@@ -256,11 +258,9 @@ class Server:
         players_label = tk.Label(root, text=f"{self.players}")
         players_label.pack()
 
-        start_clicked = False
-
         def update_players():
             players_label.config(text=f"{self.players}")
-            if not start_clicked:
+            if not self.start_clicked:
                 root.after(1000, update_players)
 
         update_players()

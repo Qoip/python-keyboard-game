@@ -1,9 +1,10 @@
-''' Vertex class represents points on game field.'''
+''' Vertex class '''
 
 from typing import Dict, Any
 
 
 class Vertex:
+    ''' Vertex class implementing point on graph with data '''
     def __init__(self, x: int, y: int, owner: str | None = None, is_main: bool = False, size: int = 5,
                  name: str = "no name", hp: int = 10):
         self.x: int = x
