@@ -154,8 +154,17 @@ class Server:
             return
 
         if data.get("command") == "get":
+            argument = data.get("argument")
+            if argument == "graph":
+                response = json.dumps(self.graph.to_dict())
+            elif argument == "legend":
+                response = json.dumps(self.get_legend())
+            elif argument == "color_scheme":
+                response = json.dumps(self.color_scheme())
+            else:
+                print("[handler]", "invalid get query from", nickname)
+                return
             print("[handler]", "get query from", nickname)
-            response = ""
             writer.write(response.encode())
             await writer.drain()
             return
