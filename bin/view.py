@@ -17,7 +17,7 @@ class View:
         self.legend: Dict[str, int] = legend
         self.words: List[str] = []
 
-        self.events: queue.Queue[Tuple[str, int]] = queue.Queue()
+        self.events: queue.Queue[Tuple[Literal["attack", "change"], int]] = queue.Queue()
 
         self.new_graph: Graph = None
         self.stopped: bool = False
