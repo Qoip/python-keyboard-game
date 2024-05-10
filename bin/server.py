@@ -41,8 +41,6 @@ class Server:
                 if size not in self.words:
                     self.words[size] = []
                 self.words[size].append(word)
-        # for i in self.words:
-        #     print(i, len(self.words[i]))
 
     async def run(self):
         server_thread = threading.Thread(target=lambda: asyncio.run(self.start_server()))

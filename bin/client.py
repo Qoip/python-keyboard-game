@@ -54,7 +54,7 @@ class Client:
         while self.view is None:
             await asyncio.sleep(0.2)
         new_words: List[str] = []
-        while self.view.legend.get("time") > 0:
+        while self.view.legend.get("time") > 1:
             while not self.view.events.empty():
                 event = self.view.events.get()
                 if event[0] == "attack":
