@@ -19,8 +19,6 @@ class View:
 
         self.events: queue.Queue[Tuple[Literal["attack", "change"], int]] = queue.Queue()
 
-        self.stopped: bool = False
-        self.__need_stop: bool = False
         self.running: bool = False
         self.lock = None
 
@@ -59,14 +57,6 @@ class View:
             with self.lock:
                 return self._legend
         return self._legend
-
-    def stop(self):
-        ''' Stop the game '''
-        self.__need_stop = True
-
-    def resume(self):
-        ''' Resume updates '''
-        self.stopped = False
 
     def update(self):
         ''' Update the display '''
@@ -173,12 +163,6 @@ class View:
         self.running = True
         self.clock = pygame.time.Clock()
         while self.running:
-            if self.__need_stop:
-                self.stopped = True
-                self.__need_stop = False
-            if self.stopped:
-                self.clock.tick(20)
-                continue
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
