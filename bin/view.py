@@ -17,7 +17,7 @@ class View:
         self.legend: Dict[str, int] = legend
         self.words: List[str] = []
 
-        self.events: queue.Queue = queue.Queue()
+        self.events: queue.Queue[Tuple[str, int]] = queue.Queue()
 
         self.new_graph: Graph = None
         self.stopped: bool = False
@@ -181,7 +181,7 @@ class View:
                             self.words[0] = self.words[0][1:]
                             if len(self.words[0]) == 0:
                                 self.words.pop(0)
-                                self.events.put(("attack", self.current_vertex))
+                                self.events.put(("attack", self.graph.get_id(self.current_vertex)))
                     elif self.mode == "choose":
                         if event.unicode.isalpha():
                             self.words[0] += event.unicode
@@ -194,7 +194,7 @@ class View:
                                     self.my_name, i) for i in range(len(self.graph.vertices))]):
                                 self.current_vertex = self.words[0]
                                 self.words = []
-                                self.events.put(("change", self.current_vertex))
+                                self.events.put(("change", self.graph.get_id(self.current_vertex)))
                                 self.mode = "default"
                             else:
                                 print("No such vertex to go.")  # TODO alert
