@@ -21,6 +21,7 @@ class Server:
         self.players: List[str] = []
         self.color_scheme: Dict[str, Tuple[int, int, int]] = {}
         self.current_vertex: Dict[str, int] = {}  # nickname -> vertex_index
+        self.legend: Dict[str, int] = None
 
         self.port = random.randrange(10000, 60000)
         self.address: str = f"127.0.0.1:{self.port}"
@@ -37,13 +38,13 @@ class Server:
         server_thread.start()
 
         await self.run_menu()
+        self.legend: Dict[str, int] = self.get_legend()
         print("[main]", "dense:", self.dense, "bounds:", self.bounds, "time:", self.time)
         print("[main]", "players:", self.players, "color_scheme:", self.color_scheme)
         print("[main]", "legend:", self.legend, "players_address:", self.players_address)
 
         self.graph = Graph()
         self.graph.generate(self.players, self.bounds, self.dense)
-        self.legend: Dict[str, int] = self.get_legend()
         self.current_vertex = {player: self.graph.get_main(player) for player in self.players}
 
         print("[main]", "game started")
@@ -108,70 +109,83 @@ class Server:
 
     async def start_server(self):
         """ Start server listening """
-        self.server = await asyncio.start_server(self.handle_update, '127.0.0.1', self.port)
-        print("started on port", self.port)
         self.is_serving = True
+        self.server = await asyncio.start_server(self.handle_update, '127.0.0.1', self.port)
+        print("[server] started on port", self.port)
         while self.is_serving:
             await asyncio.sleep(0.1)
         self.server.close()
         for connection in self.active_connections:
             connection.close()
         await self.server.wait_closed()
+        print("[server] server closed")
 
     async def handle_update(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         self.active_connections.add(writer)
-        raw_data = await reader.read(1024)
-        addr: Tuple[str, int] = writer.get_extra_info('peername')
-        print("[handler]", f"get {raw_data} from {addr}")
-        data: Dict[str, Any]
-        try:
-            data = json.loads(raw_data.decode())
-        except json.JSONDecodeError:
-            print("[handler]", "invalid data recieved")
-            writer.write("invalid".encode())
-            await writer.drain()
-            return
-
-        if data.get("command") == "connect" and not self.game_start_time:
-            if data.get("nickname") in self.players:
-                print("[handler]", "nickname exists")
-                writer.write("nickname exists".encode())
+        while self.is_serving:
+            raw_data = await reader.read(1024)
+            if not raw_data:
+                await asyncio.sleep(0.2)
+                continue
+            addr: Tuple[str, int] = writer.get_extra_info('peername')
+            print("[handler]", f"get {raw_data} from {addr}")
+            data: Dict[str, Any]
+            try:
+                data = json.loads(raw_data.decode())
+            except json.JSONDecodeError:
+                print("[handler]", "invalid data recieved")
+                writer.write("invalid".encode())
                 await writer.drain()
-                return
-            print("[handler]", "new player", data.get("nickname"))
-            self.players.append(data.get("nickname"))
-            self.color_scheme[data.get("nickname")] = tuple(data.get("color"))
-            self.players_address[addr] = data.get("nickname")
-            writer.write("connected".encode())
-            await writer.drain()
-            return
+                continue
 
-        nickname = self.players_address.get(addr, None)
-        if nickname is None:
-            print("[handler]", "unknown player query")
-            writer.write("unknown".encode())
-            await writer.drain()
-            return
+            if data.get("command") == "get" and data.get("argument") == "state":
+                print("[handler]", "state query", bool(self.game_start_time))
+                if self.game_start_time:
+                    writer.write("game started".encode())
+                else:
+                    writer.write("game not started".encode())
+                await writer.drain()
+                continue
+            elif data.get("command") == "connect" and not self.game_start_time:
+                if data.get("nickname") in self.players:
+                    print("[handler]", "nickname exists")
+                    writer.write("nickname exists".encode())
+                    await writer.drain()
+                    continue
+                print("[handler]", "new player", data.get("nickname"))
+                self.players.append(data.get("nickname"))
+                self.color_scheme[data.get("nickname")] = tuple(data.get("color"))
+                self.players_address[addr] = data.get("nickname")
+                writer.write("connected".encode())
+                await writer.drain()
+                continue
 
-        if data.get("command") == "get":
-            argument = data.get("argument")
-            if argument == "graph":
-                response = json.dumps(self.graph.to_dict())
-            elif argument == "legend":
-                response = json.dumps(self.get_legend())
-            elif argument == "color_scheme":
-                response = json.dumps(self.color_scheme())
-            else:
-                print("[handler]", "invalid get query from", nickname)
-                return
-            print("[handler]", "get query from", nickname)
-            writer.write(response.encode())
+            nickname = self.players_address.get(addr, None)
+            if nickname is None:
+                print("[handler]", "unknown player query")
+                writer.write("unknown".encode())
+                await writer.drain()
+                continue
+
+            if data.get("command") == "get":
+                argument = data.get("argument")
+                if argument == "graph":
+                    response = json.dumps(self.graph.to_dict())
+                elif argument == "legend":
+                    response = json.dumps(self.legend)
+                elif argument == "color_scheme":
+                    response = json.dumps(self.color_scheme)
+                else:
+                    print("[handler]", "invalid get query from", nickname)
+                    continue
+                print("[handler]", "get query from", nickname)
+                writer.write(response.encode())
+                await writer.drain()
+                continue
+            print("[handler]", f"'{data.get("command")}' query from {nickname}")
+            await self.client_updates.put((nickname, data))
+            writer.write("recieved".encode())
             await writer.drain()
-            return
-        print("[handler]", f"'{data.get("command")}' query from {nickname}")
-        await self.client_updates.put((nickname, data))
-        writer.write("recieved".encode())
-        await writer.drain()
 
     async def run_menu(self) -> None:
         ''' Run menu '''
