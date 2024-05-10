@@ -6,12 +6,12 @@ from typing import Dict, Any
 class Vertex:
     def __init__(self, x: int, y: int, owner: str | None = None, is_main: bool = False, size: int = 5,
                  name: str = "no name", hp: int = 10):
-        self.x = x
-        self.y = y
-        self.owner = owner
-        self.is_main = is_main
-        self.size = size
-        self.hp = hp
+        self.x: int = x
+        self.y: int = y
+        self.owner: str = owner
+        self.is_main: bool = is_main
+        self.size: int = size
+        self.hp: int = hp
         self.name: str = name
 
     def __str__(self):
@@ -30,12 +30,13 @@ class Vertex:
         }
 
     @classmethod
-    def from_dict(self, data: Dict[str, Any]):
+    def from_dict(cls, data: Dict[str, Any]) -> "Vertex":
         ''' Load from dict '''
-        self.x = data["x"]
-        self.y = data["y"]
-        self.owner = data["owner"]
-        self.is_main = data["is_main"]
-        self.size = data["size"]
-        self.hp = data["hp"]
-        self.name = data["name"]
+        instance = cls(data['x'],
+                       data['y'],
+                       data['owner'],
+                       data['is_main'],
+                       data['size'],
+                       data['name'],
+                       data['hp'])
+        return instance
