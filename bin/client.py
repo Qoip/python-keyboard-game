@@ -44,21 +44,34 @@ class Client:
         self.graph.from_dict(json.loads(await self.query('{"command": "get", "argument": "graph"}')))
         self.color_scheme = json.loads(await self.query('{"command": "get", "argument": "color_scheme"}'))
         self.legend = json.loads(await self.query('{"command": "get", "argument": "legend"}'))
-        self.view = View(self.color_scheme, self.graph, self.nickname, self.legend)
-        view_thread = threading.Thread(target=self.view.run)
+
+        self.view = None
+        self.lock = threading.Lock()
+        self.view: View = None
+        view_thread = threading.Thread(target=self.create_view)
         view_thread.start()
-        while self.legend.get("time") > 0:
+        while self.view is None:
+            await asyncio.sleep(0.2)
+        while self.view.legend.get("time") > 0:
             while not self.view.events.empty():
                 event = self.view.events.get()
                 if event[0] == "attack":
-                    self.writer.write(json.dumps({"command": "attack", "argument": event[1]}).encode())
+                    await self.query('{"command": "attack", "argument": ' + str(event[1]) + '}')
                 elif event[0] == "change":
-                    self.writer.write(json.dumps({"command": "change", "argument": event[1]}).encode())
+                    await self.query('{"command": "change", "argument": ' + str(event[1]) + '}')
             await asyncio.sleep(0.5)
-            self.graph.from_dict(json.loads(await self.query('{"command": "get", "argument": "graph"}')))
-            self.legend = json.loads(await self.query('{"command": "get", "argument": "legend"}'))
+            new_graph = json.loads(await self.query('{"command": "get", "argument": "graph"}'))
+            new_legend = json.loads(await self.query('{"command": "get", "argument": "legend"}'))
+            # with self.lock:
+            self.view._graph.from_dict(new_graph)
+            self.view._legend = new_legend
         self.view.running = False
         view_thread.join()
+
+    def create_view(self):
+        self.view = View(self.color_scheme, self.graph, self.nickname, self.legend)
+        self.view.lock = self.lock
+        self.view.run()
 
     async def query(self, data: str) -> str:
         ''' Query server '''
