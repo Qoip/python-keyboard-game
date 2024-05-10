@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 from random import randrange
 from bin.vertex import Vertex
 
@@ -124,8 +124,31 @@ class Graph:
         return len([vertex for vertex in self.vertices if vertex.owner == name])
 
     def get_main(self, name: str) -> int:
-        ''' Get main vertex index '''
+        ''' Get main vertex index of name'''
         for i, vertex in enumerate(self.vertices):
             if vertex.owner == name and vertex.is_main:
                 return i
         return None
+
+    def get_id(self, name: str) -> int:
+        ''' Get vertex index by name '''
+        for i, vertex in enumerate(self.vertices):
+            if vertex.name == name:
+                return i
+        return None
+
+    def to_dict(self) -> Dict[str, Any]:
+        ''' Convert to dict '''
+        return {
+            "vertices": [vertex.to_dict() for vertex in self.vertices],
+            "edges": self.edges,
+            "bounds": self.bounds,
+            "dense": self.dense
+        }
+
+    def from_dict(self, data: Dict[str, Any]) -> None:
+        ''' Load from dict '''
+        self.vertices = [Vertex().from_dict(vertex) for vertex in data["vertices"]]
+        self.edges = data["edges"]
+        self.bounds = data["bounds"]
+        self.dense = data["dense"]
