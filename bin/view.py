@@ -13,15 +13,16 @@ class View:
     def __init__(self, color_scheme: Dict[str, Tuple[int, int, int]],
                  graph: Graph, name: str = "", legend: Dict[str, int] = {}):
         self.color_scheme: Dict[str, Tuple[int, int, int]] = color_scheme
-        self.graph: Graph = graph
-        self.legend: Dict[str, int] = legend
+        self.__graph: Graph = graph
+        self.__legend: Dict[str, int] = legend
         self.words: List[str] = []
 
         self.events: queue.Queue[Tuple[Literal["attack", "change"], int]] = queue.Queue()
 
-        self.new_graph: Graph = None
         self.stopped: bool = False
         self.__need_stop: bool = False
+        self.running: bool = False
+        self.lock = None
 
         self.my_name: str = name
         self.current_vertex: str = None
@@ -43,6 +44,22 @@ class View:
         if MIN_WIGTH > graph.bounds[0] + GRAPH_OFFSET * 2:  # center the graph
             self.graph_start_point = (MIN_WIGTH // 2 - graph.bounds[0] // 2, GRAPH_OFFSET)
 
+    @property
+    def graph(self) -> Graph:
+        ''' Get graph '''
+        if self.lock is not None:
+            with self.lock:
+                return self.__graph
+        return self.__graph
+
+    @property
+    def legend(self) -> Dict[str, int]:
+        ''' Get legend '''
+        if self.lock is not None:
+            with self.lock:
+                return self.__legend
+        return self.__legend
+
     def stop(self):
         ''' Stop the game '''
         self.__need_stop = True
@@ -55,9 +72,6 @@ class View:
         ''' Update the display '''
         self.screen.fill(BACKGROUND_COLOR)
 
-        if self.new_graph:
-            self.graph = self.new_graph
-            self.new_graph = None
         self.__draw_graph()
         pygame.draw.line(self.screen, CONTRAST_COLOR,
                          (0, self.window_size[1] - TYPING_HEIGHT),
@@ -156,9 +170,9 @@ class View:
 
     def run(self) -> None:
         ''' Run the game '''
-        running = True
+        self.running = True
         self.clock = pygame.time.Clock()
-        while running:
+        while self.running:
             if self.__need_stop:
                 self.stopped = True
                 self.__need_stop = False
@@ -167,7 +181,7 @@ class View:
                 continue
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    self.running = False
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_TAB:  # change mode
                         if self.mode == "default":
