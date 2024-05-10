@@ -13,8 +13,8 @@ class View:
     def __init__(self, color_scheme: Dict[str, Tuple[int, int, int]],
                  graph: Graph, name: str = "", legend: Dict[str, int] = {}):
         self.color_scheme: Dict[str, Tuple[int, int, int]] = color_scheme
-        self.__graph: Graph = graph
-        self.__legend: Dict[str, int] = legend
+        self._graph: Graph = graph
+        self._legend: Dict[str, int] = legend
         self.words: List[str] = []
 
         self.events: queue.Queue[Tuple[Literal["attack", "change"], int]] = queue.Queue()
@@ -49,16 +49,16 @@ class View:
         ''' Get graph '''
         if self.lock is not None:
             with self.lock:
-                return self.__graph
-        return self.__graph
+                return self._graph
+        return self._graph
 
     @property
     def legend(self) -> Dict[str, int]:
         ''' Get legend '''
         if self.lock is not None:
             with self.lock:
-                return self.__legend
-        return self.__legend
+                return self._legend
+        return self._legend
 
     def stop(self):
         ''' Stop the game '''
