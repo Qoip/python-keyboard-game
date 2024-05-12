@@ -1,8 +1,8 @@
 import tkinter as tk
 import asyncio
 
-from bin.client import Client
-from bin.server import Server
+from src.client import Client
+from src.server import Server
 
 
 def start_server(root: tk.Tk):

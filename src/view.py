@@ -4,8 +4,8 @@ from typing import Dict, Tuple, Literal, List
 import queue
 import pygame
 
-from bin.graph import Graph
-from bin.view_constants import DEFAULT_COLOR, BACKGROUND_COLOR, CONTRAST_COLOR, GRAPH_OFFSET, MIN_WIGTH, \
+from src.graph import Graph
+from src.view_constants import DEFAULT_COLOR, BACKGROUND_COLOR, CONTRAST_COLOR, GRAPH_OFFSET, MIN_WIGTH, \
     TYPING_HEIGHT, FONT, FONT_SIZE, HINT_FONT, HINT_FONT_SIZE, LEGEND_WIDTH, LEGEND_FONT, LEGEND_FONT_SIZE
 
 

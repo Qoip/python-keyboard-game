@@ -8,7 +8,7 @@ import asyncio
 import threading
 import json
 
-from bin.graph import Graph
+from src.graph import Graph
 
 
 class Server:
@@ -35,7 +35,7 @@ class Server:
         self.start_clicked: bool = False
 
         self.words: Dict[int, List[str]] = {}
-        with open("data/words.txt", "r", encoding='utf-8') as file:
+        with open("src/data/words.txt", "r", encoding='utf-8') as file:
             for line in file:
                 word = line
                 size = len(word)

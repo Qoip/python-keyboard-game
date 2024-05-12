@@ -8,8 +8,8 @@ import json
 import threading
 import ast
 
-from bin.graph import Graph
-from bin.view import View
+from src.graph import Graph
+from src.view import View
 
 
 class Client:
