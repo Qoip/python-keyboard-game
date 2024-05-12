@@ -1,4 +1,4 @@
-""" Client module """
+''' Client module '''
 
 import ast
 import asyncio

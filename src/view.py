@@ -1,4 +1,4 @@
-""" Game view class module"""
+''' Game view class module'''
 
 import queue
 from typing import Dict, List, Literal, Tuple

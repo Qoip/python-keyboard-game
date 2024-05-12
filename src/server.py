@@ -1,4 +1,4 @@
-""" Server module """
+''' Server module '''
 
 import asyncio
 import json
@@ -46,7 +46,7 @@ class Server:
                 self.words[size].append(word)
 
     async def run(self):
-        """ Run server logic """
+        ''' Run server logic '''
         server_thread = threading.Thread(target=lambda: asyncio.run(self.start_server()))
         server_thread.start()
 
@@ -69,7 +69,7 @@ class Server:
         server_thread.join()
 
     async def game_loop(self):
-        """ Game loop """
+        ''' Game loop '''
         if self.estimated_time() != self.legend["time"]:
             self.legend["time"] = self.estimated_time()
             print("[game]", "time left:", self.estimated_time())
@@ -117,11 +117,11 @@ class Server:
                                 print("[game]", f"player {old_owner} forced to change vertex")
 
     def estimated_time(self) -> int:
-        """ Estimated time to end game """
+        ''' Estimated time to end game '''
         return self.time - int(asyncio.get_event_loop().time() - self.game_start_time)
 
     async def start_server(self):
-        """ Start server listening """
+        ''' Start server listening '''
         self.is_serving = True
         self.server = await asyncio.start_server(self.handle_update, self.host, self.port)
         print("[server] started on port", self.port)
@@ -134,7 +134,7 @@ class Server:
         print("[server] server closed")
 
     async def handle_update(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-        """ Handle client connections """
+        ''' Handle client connections '''
         self.active_connections.add(writer)
         while self.is_serving:
             raw_data = await reader.read(1024)
