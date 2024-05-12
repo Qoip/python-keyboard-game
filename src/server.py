@@ -26,7 +26,7 @@ class Server:
         self.legend: Dict[str, int] = None
 
         self.port = random.randrange(10000, 60000)
-        self.address: str = f"127.0.0.1:{self.port}"
+        self.host = '127.0.0.1'
         self.server: asyncio.AbstractServer = None
         self.is_serving: bool = False
         self.active_connections: Set[asyncio.StreamWriter] = set()
@@ -123,7 +123,7 @@ class Server:
     async def start_server(self):
         """ Start server listening """
         self.is_serving = True
-        self.server = await asyncio.start_server(self.handle_update, '127.0.0.1', self.port)
+        self.server = await asyncio.start_server(self.handle_update, self.host, self.port)
         print("[server] started on port", self.port)
         while self.is_serving:
             await asyncio.sleep(0.1)
@@ -174,13 +174,13 @@ class Server:
                 await writer.drain()
                 continue
 
-            nickname = self.players_address.get(addr, None)
-            if nickname is None:
+            if addr not in self.players_address:
                 print("[handler]", "unknown player query")
                 writer.write("unknown".encode())
                 await writer.drain()
                 continue
 
+            nickname = self.players_address[addr]
             if data.get("command") == "get":
                 argument = data.get("argument")
                 if argument == "graph":
@@ -254,7 +254,7 @@ class Server:
         divider = tk.Frame(root, height=2, bd=1, relief=tk.SUNKEN)
         divider.pack(fill=tk.X, padx=5, pady=5)
 
-        address_label = tk.Label(root, text=f"Address: {self.address}")
+        address_label = tk.Label(root, text=f"Address: {self.host}:{self.port}")
         address_label.pack()
 
         players_label = tk.Label(root, text=f"{self.players}")
