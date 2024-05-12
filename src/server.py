@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import os
 import random
 import threading
 from typing import Any, Dict, List, Set, Tuple
@@ -36,7 +37,7 @@ class Server:
         self.start_clicked: bool = False
 
         self.words: Dict[int, List[str]] = {}
-        with open("src/data/words.txt", "r", encoding='utf-8') as file:
+        with open(os.path.join("src", "data", "words.txt"), "r", encoding='utf-8') as file:
             for line in file:
                 word = line
                 size = len(word)

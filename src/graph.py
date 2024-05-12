@@ -1,5 +1,6 @@
 ''' Graph class module '''
 
+import os
 from random import randrange
 from typing import Any, Dict, List, Tuple
 
@@ -29,7 +30,7 @@ class Graph:
             point = self.__get_best_point(bounds)
             self.vertices.append(Vertex(point[0], point[1], None, False, randrange(5, 16)))  # add best with random size
         names = []
-        with open('src/data/names.txt', 'r', encoding='utf-8') as file:
+        with open(os.path.join("src", "data", "names.txt"), 'r', encoding='utf-8') as file:
             names = file.read().splitlines()
         for vertex in self.vertices:  # pick random names for vertices
             vertex.name = names.pop(randrange(len(names)))
