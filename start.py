@@ -1,5 +1,5 @@
-import tkinter as tk
 import asyncio
+import tkinter as tk
 
 from src.client import Client
 from src.server import Server

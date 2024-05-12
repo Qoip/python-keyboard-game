@@ -1,12 +1,13 @@
 """ Server module """
 
+import asyncio
+import json
+import random
+import threading
+from typing import Any, Dict, List, Set, Tuple
+
 import tkinter as tk
 from tkinter import messagebox
-import random
-from typing import Tuple, List, Dict, Any, Set
-import asyncio
-import threading
-import json
 
 from src.graph import Graph
 

@@ -1,12 +1,16 @@
 """ Game view class module"""
 
-from typing import Dict, Tuple, Literal, List
 import queue
+from typing import Dict, List, Literal, Tuple
+
 import pygame
 
 from src.graph import Graph
-from src.view_constants import DEFAULT_COLOR, BACKGROUND_COLOR, CONTRAST_COLOR, GRAPH_OFFSET, MIN_WIGTH, \
-    TYPING_HEIGHT, FONT, FONT_SIZE, HINT_FONT, HINT_FONT_SIZE, LEGEND_WIDTH, LEGEND_FONT, LEGEND_FONT_SIZE
+from src.view_constants import (BACKGROUND_COLOR, CONTRAST_COLOR,
+                                DEFAULT_COLOR, FONT, FONT_SIZE, GRAPH_OFFSET,
+                                HINT_FONT, HINT_FONT_SIZE, LEGEND_FONT,
+                                LEGEND_FONT_SIZE, LEGEND_WIDTH, MIN_WIGTH,
+                                TYPING_HEIGHT)
 
 
 class View:

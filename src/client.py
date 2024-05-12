@@ -1,12 +1,13 @@
 """ Client module """
 
-from typing import Tuple, Dict, List
-import tkinter as tk
-from tkinter import colorchooser, messagebox
+import ast
 import asyncio
 import json
 import threading
-import ast
+from typing import Dict, List, Tuple
+
+import tkinter as tk
+from tkinter import colorchooser, messagebox
 
 from src.graph import Graph
 from src.view import View

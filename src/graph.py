@@ -1,7 +1,8 @@
 ''' Graph class module '''
 
-from typing import List, Tuple, Dict, Any
 from random import randrange
+from typing import Any, Dict, List, Tuple
+
 from src.vertex import Vertex
 
 
