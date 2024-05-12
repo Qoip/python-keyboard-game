@@ -64,6 +64,7 @@ class Server:
 
         print("[main]", "game started")
         self.game_start_time = asyncio.get_event_loop().time()
+
         while self.estimated_time() > 0:
             await self.game_loop()
 
@@ -102,6 +103,7 @@ class Server:
                     print("[game]", f"invalid attack from player {nickname}: {data}\nerror: {exc}")
                     continue
                 vertex_name = self.graph.vertices[vertex_index].name
+
                 if self.graph.vertices[vertex_index].owner is nickname:
                     self.graph.vertices[vertex_index].hp += 1
                     print("[game]", f"player {nickname} healed vertex {vertex_name} ({vertex_index})")
@@ -149,6 +151,7 @@ class Server:
                 continue
             addr: Tuple[str, int] = writer.get_extra_info('peername')
             print("[handler]", f"get {raw_data} from {addr}")
+
             data: Dict[str, Any]
             try:
                 data = json.loads(raw_data.decode())

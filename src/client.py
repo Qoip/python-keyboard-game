@@ -1,4 +1,4 @@
-''' Client module '''
+""" Client module """
 
 import ast
 import asyncio
@@ -14,7 +14,8 @@ from src.view import View
 
 
 class Client:
-    ''' Game client class '''
+    """Game client class"""
+
     def __init__(self):
         self.graph: Graph = None
         self.color_scheme: Dict[str, Tuple[int, int, int]] = None
@@ -31,17 +32,18 @@ class Client:
         self.lock = threading.Lock()
 
     async def run(self):
-        ''' Run client '''
+        """Run client"""
         connected = False
         while not connected:
             self.run_menu()
-            self.reader, self.writer = await asyncio.open_connection(*self.address.split(':'))
+            self.reader, self.writer = await asyncio.open_connection(*self.address.split(":"))
             connect_data = f'{{"command": "connect", "nickname": "{self.nickname}", "color": {list(self.color)}}}'
             response = await self.query(connect_data)
             if response == "connected":
                 connected = True
             else:
                 messagebox.showerror("Error", response)
+
         message = ""
         while message != "game started":
             message = await self.query('{"command": "get", "argument": "state"}')
@@ -53,16 +55,18 @@ class Client:
 
         view_thread = threading.Thread(target=self.create_view)
         view_thread.start()
+
         while self.view is None:
             await asyncio.sleep(0.2)
         new_words: List[str] = []
+
         while self.view.legend.get("time") > 1:
             while not self.view.events.empty():
                 event = self.view.events.get()
                 if event[0] == "attack":
-                    await self.query('{"command": "attack", "argument": ' + str(event[1]) + '}')
+                    await self.query('{"command": "attack", "argument": ' + str(event[1]) + "}")
                 elif event[0] == "change":
-                    await self.query('{"command": "change", "argument": ' + str(event[1]) + '}')
+                    await self.query('{"command": "change", "argument": ' + str(event[1]) + "}")
                     response = await self.query('{"command": "get", "argument": "words"}')
                     if response.startswith("["):
                         new_words = ast.literal_eval(response)
@@ -70,6 +74,7 @@ class Client:
             await asyncio.sleep(0.5)
             new_graph = json.loads(await self.query('{"command": "get", "argument": "graph"}'))
             new_legend = json.loads(await self.query('{"command": "get", "argument": "legend"}'))
+
             with self.lock:
                 self.view.graph_.from_dict(new_graph)
                 self.view.legend_ = new_legend
@@ -80,20 +85,20 @@ class Client:
         view_thread.join()
 
     def create_view(self):
-        ''' Create and run view'''
+        """Create and run view"""
         self.view = View(self.color_scheme, self.graph, self.nickname, self.legend)
         self.view.lock = self.lock
         self.view.run()
 
     async def query(self, data: str) -> str:
-        ''' Query server '''
+        """Query server"""
         self.writer.write(data.encode())
         await self.writer.drain()
         response = await self.reader.read(4096)
         return response.decode()
 
     def run_menu(self) -> None:
-        ''' Run menu '''
+        """Run menu"""
         root = tk.Tk()
         root.title("Client menu")
         root.geometry("200x200")

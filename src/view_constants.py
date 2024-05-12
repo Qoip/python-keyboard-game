@@ -1,4 +1,4 @@
-''' This module contains the constants used in the view module. '''
+""" This module contains the constants used in the view module. """
 
 MIN_WIGTH = 500  # minimum window width
 
