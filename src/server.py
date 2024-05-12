@@ -11,10 +11,12 @@ import tkinter as tk
 from tkinter import messagebox
 
 from src.graph import Graph
+from src.server_config import HOST, PORT
 
 
 class Server:
     ''' Game server class '''
+
     def __init__(self):
         self.bounds: Tuple[int, int] = None
         self.dense: int = None
@@ -25,8 +27,8 @@ class Server:
         self.current_vertex: Dict[str, int] = {}  # nickname -> vertex_index
         self.legend: Dict[str, int] = None
 
-        self.port = random.randrange(10000, 60000)
-        self.host = '127.0.0.1'
+        self.port = PORT
+        self.host = HOST
         self.server: asyncio.AbstractServer = None
         self.is_serving: bool = False
         self.active_connections: Set[asyncio.StreamWriter] = set()
@@ -78,6 +80,7 @@ class Server:
 
         while self.client_updates.qsize() > 0:
             nickname, data = await self.client_updates.get()
+
             if data.get("command") == "change":
                 try:
                     vertex_index = int(data.get("argument"))
@@ -125,9 +128,11 @@ class Server:
         self.is_serving = True
         self.server = await asyncio.start_server(self.handle_update, self.host, self.port)
         print("[server] started on port", self.port)
+
         while self.is_serving:
             await asyncio.sleep(0.1)
         self.server.close()
+
         for connection in self.active_connections:
             connection.close()
         await self.server.wait_closed()
@@ -136,6 +141,7 @@ class Server:
     async def handle_update(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         ''' Handle client connections '''
         self.active_connections.add(writer)
+
         while self.is_serving:
             raw_data = await reader.read(1024)
             if not raw_data:
