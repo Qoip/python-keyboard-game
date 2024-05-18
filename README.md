@@ -34,8 +34,9 @@ Verticies differs by their size, which shows how hard words you have to type to 
 
 Also theres a menu at start where you can change nickname, connect to server or create game and start it when all players connected. Graph (field) is generated randomly on how many players are in the game.
 
-approximate scheme image:
-![pic](https://github.com/Qoip/python-keyboard-game/assets/110194047/41e84037-210d-48cb-bbec-333abc1b8027)
+video preview:
+
+https://github.com/Qoip/python-keyboard-game/assets/110194047/4ce9f72b-3341-4cea-ad11-ead530789783
 
 ## Features
 
