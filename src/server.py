@@ -251,6 +251,9 @@ class Server:
             if not x_entry.get() or not y_entry.get() or not dense_entry.get() or not time_entry.get():
                 messagebox.showerror("Error", "Fill all fields")
                 return
+            if len(self.players) == 0:
+                messagebox.showerror("Error", "At least one player needed")
+                return
             self.bounds = (int(x_entry.get()), int(y_entry.get()))
             self.dense = int(dense_entry.get())
             self.time = int(time_entry.get())
