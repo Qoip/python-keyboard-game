@@ -1,5 +1,25 @@
 # python-keyboard-game
 
+## Run instruction
+
+### Linux/Mac
+
+```
+python3 -m venv env
+source env/bin/activate
+pip3 install -r requirements.txt
+python3 start.py
+```
+
+### Windows
+
+```
+python -m venv env
+env\Scripts\activate
+pip install -r requirements.txt
+python start.py
+```
+
 ## Description
 
 My project is a multiplayer client-server game where players compete in typing words. Each player will see a pygame window divided in two sections:
