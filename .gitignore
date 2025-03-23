@@ -1,0 +1,5 @@
+*.png
+__pycache__
+test*.py
+TODO.md
+env
